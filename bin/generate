@@ -1,0 +1,71 @@
+#!/bin/bash
+
+set -x
+
+# generate the algebras of interest
+
+# macos+homebrew
+FIND=gfind
+# Unix:
+#FIND=find
+
+#mkdir build
+#cd build
+#cmake ..
+#make
+
+rm -rf output
+mkdir output
+
+# even if I use these, they don't get respected by the inner cmakes, and everything gets installed into /usr/local/
+#CMAKEFLAGS=-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}
+#INSTALL_PREFIX=${HOME}/garamon
+#rm -rf ${INSTALL_PREFIX}
+#mkdir ${INSTALL_PREFIX}
+
+# example install paths:
+# -- Installing: /usr/local/include/st3ga/BasisTransformations.hpp
+# -- Installing: /usr/local/include/st3ga/Constants.hpp
+# -- Installing: /usr/local/include/st3ga/DualCoefficients.hpp
+# -- Installing: /usr/local/include/st3ga/Geometric.hpp
+# -- Installing: /usr/local/include/st3ga/GeometricExplicit.hpp
+# -- Installing: /usr/local/include/st3ga/Inner.hpp
+# -- Installing: /usr/local/include/st3ga/InnerExplicit.hpp
+# -- Installing: /usr/local/include/st3ga/Mvec.hpp
+# -- Installing: /usr/local/include/st3ga/Outer.hpp
+# -- Installing: /usr/local/include/st3ga/OuterExplicit.hpp
+# -- Installing: /usr/local/include/st3ga/Utility.hpp
+# -- Installing: /usr/local/include/st3ga/Mvec.cpp
+# -- Installing: /usr/local/lib/libst3ga.dylib
+
+INSTALL_PREFIX=/usr/local/include
+
+p=`pwd`
+# run from build:
+#for i in e2ga ; do
+#for i in e3ga ; do
+for i in e2ga e3ga st3ga ; do
+   ./garamon_generator ../conf/$i.conf
+
+   # hack to purge the ^M's that make the generated garamon output files unreadable:
+   perl -p -i -e 's///' `${FIND} output/garamon_$i -type f`
+
+   cd output/garamon_$i || exit 2
+
+   mkdir build
+   cd build
+   cmake ${CMAKEFLAGS} ..
+   make
+
+   rm -rf ${INSTALL_PREFIX}/$i
+   make install
+
+   cd ${INSTALL_PREFIX}/$i || exit 3
+   doxygen -g
+   perl -p -i -e 's/My Project/Garamon $i/;' Doxyfile
+   doxygen Doxyfile
+   cd latex || exit 4
+   make
+
+   cd $p || exit 5
+done
