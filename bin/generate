@@ -1,18 +1,26 @@
 #!/bin/bash
+# generate the algebras of interest
 
 set -x
 
-# generate the algebras of interest
+# ubuntu prereqs:
+#sudo apt-get install cmake
+#sudo apt-get install libeigen3-dev
+#sudo apt-get install doxygen
+#sudo apt-get install graphviz
 
 # macos+homebrew
-FIND=gfind
+#FIND=gfind
 # Unix:
-#FIND=find
+FIND=find
 
+# one time requirement.  This generates garamon_generator.  Once done, we can run from build
 #mkdir build
 #cd build
 #cmake ..
 #make
+
+test -e ./garamon_generator || exit 17
 
 rm -rf output
 mkdir output
@@ -57,15 +65,15 @@ for i in e2ga e3ga st3ga ; do
    cmake ${CMAKEFLAGS} ..
    make
 
-   rm -rf ${INSTALL_PREFIX}/$i
-   make install
+   sudo rm -rf ${INSTALL_PREFIX}/$i
+   sudo make install
 
    cd ${INSTALL_PREFIX}/$i || exit 3
-   doxygen -g
-   perl -p -i -e 's/My Project/Garamon $i/;' Doxyfile
-   doxygen Doxyfile
+   sudo doxygen -g
+   sudo perl -p -i -e 's/My Project/Garamon $i/;' Doxyfile
+   sudo doxygen Doxyfile
    cd latex || exit 4
-   make
+   sudo make
 
    cd $p || exit 5
 done
